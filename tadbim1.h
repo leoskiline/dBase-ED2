@@ -396,13 +396,14 @@ void ExibeRegistros(Unidade *posicao)
 		gotoxy(col,5);
 		printf("%s",campos->fieldname);
 		lin = 6;
-		records++;
-		gotoxy(10,linr);
-		printf("%d",records);
-		linr++;
+		records = 0;
+		linr=6;
 		while(campos->pdados != NULL)
 		{
-			
+			gotoxy(10,linr);
+			linr++;
+			records++;
+			printf("%d",records);
 			gotoxy(col,lin);
 			if(campos->pdados->terminal == 'N')
 				printf("%.2f",campos->pdados->no.number);
