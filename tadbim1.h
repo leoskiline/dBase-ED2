@@ -718,6 +718,10 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		getch();
 		telainicial();
 	}
+	else if(stricmp("CLEAR",cmd)==0)
+	{
+		telainicial();
+	}
 }
 
 void limpatela()
