@@ -233,22 +233,22 @@ void DesenhaDir()
 void Dir(Unidade *posicao)
 {
 	textcolor(BLACK);
-	Unidade *aux = posicao;
+	Database *aux = posicao->arqs;
 	int i = 7;
 	gotoxy(10,5);
 	printf("Current Unit (%s)",posicao->und);
 	DesenhaDir();
-	while(aux->arqs != NULL)
+	while(aux != NULL)
 	{
 		gotoxy(8,i);
-		printf("%s\n",aux->arqs->nomedbf);
+		printf("%s\n",aux->nomedbf);
 		gotoxy(56,i);
-		printf("%d",getSize(aux->arqs));
+		printf("%d",getSize(aux));
 		gotoxy(40,i);
-		printf("%s",aux->arqs->data);
+		printf("%s",aux->data);
 		gotoxy(31,i);
-		printf("%d",getRecords(aux->arqs));
-		aux->arqs = aux->arqs->prox;
+		printf("%d",getRecords(aux));
+		aux = aux->prox;
 		i++;
 	}
 	gotoxy(8,i);
@@ -391,6 +391,7 @@ void ExibeRegistros(Unidade *posicao)
 	printf("Record#");
 	int records = 0,col = 25,lin,linr=6;
 	Field *campos = posicao->arqs->campos;
+	Type *aux = campos->pdados;
 	while(campos != NULL)
 	{
 		gotoxy(col,5);
@@ -398,24 +399,25 @@ void ExibeRegistros(Unidade *posicao)
 		lin = 6;
 		records = 0;
 		linr=6;
-		while(campos->pdados != NULL)
+		aux = campos->pdados;
+		while(aux != NULL)
 		{
 			gotoxy(10,linr);
 			linr++;
 			records++;
 			printf("%d",records);
 			gotoxy(col,lin);
-			if(campos->pdados->terminal == 'N')
-				printf("%.2f",campos->pdados->no.number);
-			else if(campos->pdados->terminal == 'C')
-				printf("%s",campos->pdados->no.character);
-			else if(campos->pdados->terminal == 'D')
-				printf("%s",campos->pdados->no.date);
-			else if(campos->pdados->terminal == 'L')
-				printf("%c",campos->pdados->no.logical);
-			else if(campos->pdados->terminal == 'M')
-				printf("%s",campos->pdados->no.memo);
-			campos->pdados = campos->pdados->prox;
+			if(aux->terminal == 'N')
+				printf("%.2f",aux->no.number);
+			else if(aux->terminal == 'C')
+				printf("%s",aux->no.character);
+			else if(aux->terminal == 'D')
+				printf("%s",aux->no.date);
+			else if(aux->terminal == 'L')
+				printf("%c",aux->no.logical);
+			else if(aux->terminal == 'M')
+				printf("%s",aux->no.memo);
+			aux = aux->prox;
 			lin++;
 		}
 		campos = campos->prox;
@@ -428,11 +430,12 @@ void imprimeStructure(Unidade *posicao)
 	int i = 1;
 	int pos = 8;
 	int somawidth = 0;
-	Database *aux = posicao->arqs;
+	Field *aux = posicao->arqs->campos;
+	Database *aux2 = posicao->arqs;
 	gotoxy(10,4);
 	printf("Structure for database: %s//%s",posicao->und,posicao->arqs->nomedbf);
 	gotoxy(10,5);
-	//printf("Number of data records: %d",getRecords(aux2));
+	printf("Number of data records: %d",getRecords(aux2));
 	gotoxy(10,6);
 	printf("Date of last update   : %s",posicao->arqs->data);
 	gotoxy(10,7);
@@ -445,18 +448,18 @@ void imprimeStructure(Unidade *posicao)
 	printf("Width");
 	gotoxy(50,7);
 	printf("Dec");
-	while(aux->campos != NULL)
+	while(aux != NULL)
 	{
 		gotoxy(10,pos);
 		printf("%d",i);
 		gotoxy(18,pos);
-		printf("%s",aux->campos->fieldname);
+		printf("%s",aux->fieldname);
 		gotoxy(30,pos);
-		printf("%s",getTipo(aux->campos->type));
+		printf("%s",getTipo(aux->type));
 		gotoxy(42,pos);
-		printf("%d",aux->campos->width);
-		somawidth += aux->campos->width;
-		aux->campos = aux->campos->prox;
+		printf("%d",aux->width);
+		somawidth += aux->width;
+		aux = aux->prox;
 		i++;
 		pos++;
 	}
@@ -471,6 +474,7 @@ void insereRegistro(Unidade **posicao)
 {
 	Field *aux = (*posicao)->arqs->campos;
 	int pos = 5;
+	Type *aux2 = NULL;
 	float valor;
 	char string[50];
 	while(aux != NULL)
@@ -491,11 +495,12 @@ void insereRegistro(Unidade **posicao)
 			}
 			else
 			{
-				while(aux->pdados->prox != NULL)
+				aux2 = aux->pdados;
+				while(aux2->prox != NULL)
 				{
-					aux->pdados = aux->pdados->prox;
+					aux2 = aux2->prox;
 				}
-				aux->pdados->prox = caixa;
+				aux2->prox = caixa;
 			}
 		}
 		else
@@ -520,11 +525,12 @@ void insereRegistro(Unidade **posicao)
 			}
 			else
 			{
-				while(aux->pdados->prox != NULL)
+				aux2 = aux->pdados;
+				while(aux2->prox != NULL)
 				{
-					aux->pdados = aux->pdados->prox;
+					aux2 = aux2->prox;
 				}
-				aux->pdados->prox = caixa;
+				aux2->prox = caixa;
 			}
 		}
 		pos++;
@@ -579,6 +585,62 @@ char *getValorBuscado(char *cmd)
 	}
 	valorBuscado = palavra[1];
 	return valorBuscado;
+}
+
+void LocalizarRegistro(Unidade *posicao,char *campo,char *valor)
+{
+	Field *aux = posicao->arqs->campos;
+	int i = 0;
+	while(aux->prox != NULL && strcmp(aux->fieldname,campo) != 0)
+	{
+		aux = aux->prox;
+	}
+	if(aux->type == 'N')
+	{
+		float valorf = atof(valor);
+		while(aux->pdados->prox != NULL && aux->pdados->no.number != valorf)
+		{
+			aux->pdados = aux->pdados->prox;
+			i++;
+		}
+	}
+	else if(aux->type == 'L')
+	{
+		while(aux->pdados->prox != NULL && aux->pdados->no.logical != valor[0])
+		{
+			aux->pdados = aux->pdados->prox;
+			i++;
+		}
+	}
+	else if(aux->type == 'C')
+	{
+		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.character,valor) != NULL)
+		{
+			aux->pdados = aux->pdados->prox;
+			i++;
+		}
+	}
+	else if(aux->type == 'D')
+	{
+		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.date,valor) != NULL)
+		{
+			aux->pdados = aux->pdados->prox;
+			i++;
+		}
+	}
+	else if(aux->type == 'M')
+	{
+		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.memo,valor) != NULL)
+		{
+			aux->pdados = aux->pdados->prox;
+			i++;
+		}
+	}
+	if(i != 0)
+		printf("Record: %d",i+1);
+	else
+		printf("Nao Encontrado!");
+	getch();
 }
 
 void comando(char *cmd,Unidade *und,Unidade **posicao)
@@ -776,7 +838,28 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		strcpy(cmd2,cmd);
 		Campo = getCampo(cmd);
 		ValorBuscado = getValorBuscado(cmd2);
+		gotoxy(80,28);
+		if((*posicao) != NULL)
+		{
+			if((*posicao)->arqs != NULL)
+			{
+				limpatela();
+				desenhaBorda();
+				LocalizarRegistro(*posicao,Campo,ValorBuscado);
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
 		getch();
+		telainicial();
 	}
 }
 
@@ -860,7 +943,7 @@ void commandList()
 	escreveComando("APPEND","Insert New Register in Last Position","APPEND",13);
 	escreveComando("LIST","List All Fields","LIST",14);
 	escreveComando("CLEAR","Clear Screen and Return to Main Menu","CLEAR",15);
-	escreveComando("LOCATE","List Fields With Filter","LOCATE FOR NAME = 'Joao da Silva'",16);
+	escreveComando("LOCATE","List Fields With Filter","LOCATE FOR NAME = \"Joao da Silva\"",16);
 	escreveComando("GOTO","Goto Determined Number Record","GOTO 2",17);
 	escreveComando("DISPLAY","Display Current Register","DISPLAY",18);
 	escreveComando("EDIT","Edit Current Register","EDIT",19);
