@@ -534,6 +534,53 @@ void insereRegistro(Unidade **posicao)
 	printf("Registro Inserido. Pressione qualquer tecla para continuar.");
 }
 
+char *subString(char *someString, int n) 
+{
+   char *new = malloc(sizeof(char)*n+1);
+   strncpy(new, someString, n);
+   new[n] = '\0';
+   return new;
+}
+
+char Locate(char *cmd)
+{
+	return stricmp(subString(cmd,11),"LOCATE FOR ") == 0;
+}
+
+char *getCampo(char *cmd)
+{
+	char *pch2;
+	char *palavra2[10];
+	char *campoBuscado;
+	int j = 0;
+	pch2 = strtok(cmd," ");
+	while(pch2 != NULL)
+	{
+		palavra2[j] = pch2;
+		j++;
+		pch2 = strtok(NULL," ");
+	}
+	campoBuscado = palavra2[2];
+	return campoBuscado;
+}
+
+char *getValorBuscado(char *cmd)
+{
+	char *pch;
+	pch = strtok(cmd,"\"\"");
+	char *palavra[2];
+	char *valorBuscado;
+	int i = 0;
+	while(pch != NULL)
+	{
+		palavra[i] = pch;
+		i++;
+		pch = strtok(NULL,"\"\"");
+	}
+	valorBuscado = palavra[1];
+	return valorBuscado;
+}
+
 void comando(char *cmd,Unidade *und,Unidade **posicao)
 {
 	if(set_default_to(cmd))
@@ -718,9 +765,18 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		getch();
 		telainicial();
 	}
-	else if(stricmp("CLEAR",cmd)==0)
+	else if(stricmp("CLEAR",cmd)==0 || stricmp("CLS",cmd) == 0)
 	{
 		telainicial();
+	}
+	else if(Locate(cmd))
+	{
+		char *Campo,*ValorBuscado;
+		char cmd2[50];
+		strcpy(cmd2,cmd);
+		Campo = getCampo(cmd);
+		ValorBuscado = getValorBuscado(cmd2);
+		getch();
 	}
 }
 
