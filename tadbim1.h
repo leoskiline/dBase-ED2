@@ -589,9 +589,10 @@ char *getValorBuscado(char *cmd)
 	return valorBuscado;
 }
 
-void LocalizarRegistro(Unidade *posicao,char *campo,char *valor)
+void LocalizarRegistro(Database *posicao,char *campo,char *valor)
 {
-	Field *aux = posicao->arqs->campos;
+	Field *aux = posicao->campos;
+	Type *dados = aux->pdados;
 	int i = 0;
 	while(aux->prox != NULL && strcmp(aux->fieldname,campo) != 0)
 	{
@@ -599,47 +600,57 @@ void LocalizarRegistro(Unidade *posicao,char *campo,char *valor)
 	}
 	if(aux->type == 'N')
 	{
-		float valorf = atof(valor);
-		while(aux->pdados->prox != NULL && aux->pdados->no.number != valorf)
+		float valorf = atof(valor);	
+		while(dados->prox != NULL && dados->no.number != valorf)
 		{
-			aux->pdados = aux->pdados->prox;
+			dados = dados->prox;
 			i++;
 		}
+		if(dados->no.number == valorf)
+			i++;
 	}
 	else if(aux->type == 'L')
 	{
-		while(aux->pdados->prox != NULL && aux->pdados->no.logical != valor[0])
+		while(dados->prox != NULL && dados->no.logical != valor[0])
 		{
-			aux->pdados = aux->pdados->prox;
+			dados = dados->prox;
 			i++;
 		}
+		if(dados->no.logical == valor[0])
+			i++;
 	}
 	else if(aux->type == 'C')
 	{
-		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.character,valor) != NULL)
+		while(dados->prox != NULL && strcmp(dados->no.character,valor) != 0)
 		{
-			aux->pdados = aux->pdados->prox;
+			dados = dados->prox;
 			i++;
 		}
+		if(strcmp(dados->no.character,valor) == 0)
+			i++;
 	}
 	else if(aux->type == 'D')
 	{
-		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.date,valor) != NULL)
+		while(dados->prox != NULL && strcmp(dados->no.date,valor) != 0)
 		{
-			aux->pdados = aux->pdados->prox;
+			dados = dados->prox;
 			i++;
 		}
+		if(strcmp(dados->no.date,valor) == 0)
+			i++;
 	}
 	else if(aux->type == 'M')
 	{
-		while(aux->pdados->prox != NULL && strcmp(aux->pdados->no.memo,valor) != NULL)
+		while(dados->prox != NULL && strcmp(dados->no.memo,valor) != 0)
 		{
-			aux->pdados = aux->pdados->prox;
+			dados = dados->prox;
 			i++;
 		}
+		if(strcmp(dados->no.memo,valor) == 0)
+			i++;
 	}
 	if(i != 0)
-		printf("Record: %d",i+1);
+		printf("Record: %d",i);
 	else
 		printf("Nao Encontrado!");
 	getch();
@@ -849,11 +860,12 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if((*posicao)->arqs != NULL)
+			if(*dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
-				LocalizarRegistro(*posicao,Campo,ValorBuscado);
+				Database *ptr = *dbatual;
+				LocalizarRegistro(ptr,Campo,ValorBuscado);
 			}
 			else
 			{
