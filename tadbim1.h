@@ -190,29 +190,28 @@ Database *buscarDatabase(Unidade **posicao,char database[20])
 	return pos;
 }
 
-int getRecords(Database *db)
+int getRecords(Field *campos)
 {
 	int i = 0;
-	Database *aux = db;
-	while(aux->campos != NULL)
+	while(campos != NULL)
 	{
-		while(aux->campos->pdados != NULL)
+		while(campos->pdados != NULL)
 		{
 			i++;
-			db->campos->pdados = db->campos->pdados->prox;
+			campos->pdados = campos->pdados->prox;
 		}
-		aux->campos = aux->campos->prox;
+		campos = campos->prox;
 	}
 	return i;
 }
 
-int getSize(Database *db)
+int getSize(Field *campos)
 {
 	int i=0;
-	while(db->campos != NULL)
+	while(campos != NULL)
 	{
-		i += db->campos->width;
-		db->campos = db->campos->prox;
+		i += campos->width;
+		campos = campos->prox;
 	}
 	return i;
 }
@@ -230,24 +229,26 @@ void DesenhaDir()
 }
 
 
-void Dir(Unidade *posicao)
+void Dir(Database *posicao,char *unidade)
 {
 	textcolor(BLACK);
-	Database *aux = posicao->arqs;
+	Database *aux = posicao;
+	Field *campos = aux->campos;
+	Field *campos2 = aux->campos;
 	int i = 7;
 	gotoxy(10,5);
-	printf("Current Unit (%s)",posicao->und);
+	printf("Current Unit (%s)",unidade);
 	DesenhaDir();
 	while(aux != NULL)
 	{
 		gotoxy(8,i);
 		printf("%s\n",aux->nomedbf);
 		gotoxy(56,i);
-		printf("%d",getSize(aux));
+		printf("%d",getSize(campos));
 		gotoxy(40,i);
 		printf("%s",aux->data);
 		gotoxy(31,i);
-		printf("%d",getRecords(aux));
+		printf("%d",getRecords(campos2));
 		aux = aux->prox;
 		i++;
 	}
@@ -385,12 +386,12 @@ char Use(char cmd[30])
 	return cmd[0] == 'U' && cmd[1] == 'S' && cmd[2] == 'E';
 }
 
-void ExibeRegistros(Unidade *posicao)
+void ExibeRegistros(Field *posicao)
 {
 	gotoxy(10,5);
 	printf("Record#");
 	int records = 0,col = 25,lin,linr=6;
-	Field *campos = posicao->arqs->campos;
+	Field *campos = posicao;
 	Type *aux = campos->pdados;
 	while(campos != NULL)
 	{
@@ -425,19 +426,18 @@ void ExibeRegistros(Unidade *posicao)
 	}
 }
 
-void imprimeStructure(Unidade *posicao)
+void imprimeStructure(Database *posicao,char *unidade)
 {
 	int i = 1;
 	int pos = 8;
 	int somawidth = 0;
-	Field *aux = posicao->arqs->campos;
-	Database *aux2 = posicao->arqs;
+	Field *aux = posicao->campos;
 	gotoxy(10,4);
-	printf("Structure for database: %s//%s",posicao->und,posicao->arqs->nomedbf);
+	printf("Structure for database: %s//%s",unidade,posicao->nomedbf);
 	gotoxy(10,5);
-	printf("Number of data records: %d",getRecords(aux2));
+	printf("Number of data records: %d",getRecords(aux));
 	gotoxy(10,6);
-	printf("Date of last update   : %s",posicao->arqs->data);
+	printf("Date of last update   : %s",posicao->data);
 	gotoxy(10,7);
 	printf("Field");
 	gotoxy(18,7);
@@ -470,9 +470,9 @@ void imprimeStructure(Unidade *posicao)
 }
 
 
-void insereRegistro(Unidade **posicao)
+void insereRegistro(Database **posicao)
 {
-	Field *aux = (*posicao)->arqs->campos;
+	Field *aux = (*posicao)->campos;
 	int pos = 5;
 	Type *aux2 = NULL;
 	float valor;
@@ -643,7 +643,7 @@ void LocalizarRegistro(Unidade *posicao,char *campo,char *valor)
 	getch();
 }
 
-void comando(char *cmd,Unidade *und,Unidade **posicao)
+void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 {
 	if(set_default_to(cmd))
 	{
@@ -688,6 +688,7 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 				limpaParcial();
 				desenhaCreate();
 				typeFields(&*posicao,arquivo);
+				*dbatual = (*posicao)->arqs;
 			}
 			else
 			{
@@ -710,8 +711,8 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		{
 			limpatela();
 			desenhaBorda();
-			Unidade *aux = *posicao;
-			Dir(aux);
+			Database *aux = (*posicao)->arqs;
+			Dir(aux,(*posicao)->und);
 			getch();
 			telainicial();
 		}
@@ -733,10 +734,10 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		{
 			if((*posicao)->arqs != NULL)
 			{
-				(*posicao)->arqs = buscarDatabase(&*posicao,&*palavra[1]);
+				*dbatual = buscarDatabase(&*posicao,&*palavra[1]);
 				textcolor(BLACK);
 				gotoxy(80,28);
-				printf("%d",(*posicao)->arqs);
+				printf("Database Encontrada: %x",dbatual);
 			}
 			else
 			{
@@ -757,11 +758,12 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if((*posicao)->arqs != NULL)
+			if(dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
-				imprimeStructure(*posicao);
+				Database *aux = *dbatual;
+				imprimeStructure(aux,(*posicao)->und);
 			}
 			else
 			{
@@ -782,11 +784,11 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if((*posicao)->arqs != NULL)
+			if(dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
-				insereRegistro(&*posicao);
+				insereRegistro(&*dbatual);
 			}
 			else
 			{
@@ -807,11 +809,12 @@ void comando(char *cmd,Unidade *und,Unidade **posicao)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if((*posicao)->arqs != NULL)
+			if(dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
-				ExibeRegistros(*posicao);
+				Field *campos = (*dbatual)->campos;
+				ExibeRegistros(campos);
 			}
 			else
 			{
@@ -1009,6 +1012,7 @@ void Startup()
 	char cmd[100];
 	Unidade *und = NULL;
 	Unidade *pos = NULL;
+	Database *dbatual = NULL;
 	createDir(&und,"C:");
 	createDir(&und,"D:");
 	deslMaximizar();
@@ -1017,7 +1021,7 @@ void Startup()
 	while(strcmp(cmd,"QUIT") != 0)
 	{
 		strcpy(cmd,commandType(cmd));
-		comando(cmd,und,&pos);
+		comando(cmd,und,&pos,&dbatual);
 		limpaParcial();
 	}
 }
