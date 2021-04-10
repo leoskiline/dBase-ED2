@@ -185,7 +185,8 @@ Database *buscarDatabase(Unidade **posicao,char database[20])
 	{
 		while(aux->prox != NULL && strcmp(database,aux->nomedbf) != 0)
 			aux = aux->prox;
-		pos = aux;
+		if(strcmp(database,aux->nomedbf) == 0)
+			pos = aux;
 	}
 	return pos;
 }
@@ -193,12 +194,13 @@ Database *buscarDatabase(Unidade **posicao,char database[20])
 int getRecords(Field *campos)
 {
 	int i = 0;
+	Type *ptr = campos->pdados;
 	while(campos != NULL)
 	{
-		while(campos->pdados != NULL)
+		while(ptr != NULL)
 		{
 			i++;
-			campos->pdados = campos->pdados->prox;
+			ptr = ptr->prox;
 		}
 		campos = campos->prox;
 	}
@@ -737,7 +739,10 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 				*dbatual = buscarDatabase(&*posicao,&*palavra[1]);
 				textcolor(BLACK);
 				gotoxy(80,28);
-				printf("Database Encontrada: %x",dbatual);
+				if(*dbatual != NULL)
+					printf("Database Encontrada: %x",dbatual);
+				else
+					printf("Database nao Encontrada!");
 			}
 			else
 			{
@@ -758,7 +763,7 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if(dbatual != NULL)
+			if(*dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
@@ -784,7 +789,7 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if(dbatual != NULL)
+			if(*dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
@@ -809,7 +814,7 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 		gotoxy(80,28);
 		if((*posicao) != NULL)
 		{
-			if(dbatual != NULL)
+			if(*dbatual != NULL)
 			{
 				limpatela();
 				desenhaBorda();
