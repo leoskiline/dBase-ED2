@@ -728,6 +728,61 @@ void Display(Field *posicao,int record)
 	}
 }
 
+void Edit(Database **db,int *record)
+{
+	Database *dbaux = *db;
+	int lin = 5,records,lin2 = 5;
+	Field *camposaux = dbaux->campos;
+	Type *tiposaux = camposaux->pdados;
+	while(camposaux != NULL)
+	{
+		gotoxy(10,lin);
+		printf("%s",camposaux->fieldname);
+		records = 0;
+		tiposaux = camposaux->pdados;
+		while(tiposaux != NULL)
+		{
+			records++;;
+			if(records == *record)
+			{
+				gotoxy(25,lin2);
+				lin2++;
+				if(tiposaux->terminal == 'N')
+				{
+					printf("%.2f - Digite Novo Valor:",tiposaux->no.number);
+					scanf("%f",&tiposaux->no.number);
+				}
+				else if(tiposaux->terminal == 'C')
+				{
+					printf("%s - Digite Novo Valor:",tiposaux->no.character);
+					fflush(stdin);
+					gets(tiposaux->no.character);
+				}
+				else if(tiposaux->terminal == 'D')
+				{
+					printf("%s - Digite Novo Valor:",tiposaux->no.date);
+					fflush(stdin);
+					gets(tiposaux->no.date);
+				}
+				else if(tiposaux->terminal == 'L')
+				{
+					printf("%c - Digite Novo Valor:",tiposaux->no.logical);
+					scanf("%c",&tiposaux->no.logical);
+				}
+				else if(tiposaux->terminal == 'M')
+				{
+					printf("%s - Digite Novo Valor:",tiposaux->no.memo);
+					fflush(stdin);
+					gets(tiposaux->no.memo);
+				}	
+			}
+			tiposaux = tiposaux->prox;
+		}
+		camposaux = camposaux->prox;
+		lin++;
+	}
+}
+
 void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual,int *record)
 {
 	if(set_default_to(cmd))
@@ -1001,6 +1056,40 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual,int *re
 					limpatela();
 					desenhaBorda();
 					Display(ptr->campos,*record);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("EDIT",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					Edit(&*dbatual,record);
 				}	
 				else
 				{
