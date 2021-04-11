@@ -27,6 +27,7 @@ struct type
 };
 
 typedef struct type Type;
+typedef struct typelogical TypeLogical;
 typedef struct field Field;
 
 struct typelogical
@@ -473,6 +474,7 @@ void insereRegistro(Database **posicao)
 {
 	Field *aux = (*posicao)->campos;
 	int pos = 5;
+	TypeLogical *status = (*posicao)->status;
 	Type *aux2 = NULL;
 	float valor;
 	char string[50];
@@ -500,6 +502,21 @@ void insereRegistro(Database **posicao)
 					aux2 = aux2->prox;
 				}
 				aux2->prox = caixa;
+			}
+			TypeLogical *caixaStatus = (TypeLogical*)malloc(sizeof(TypeLogical));
+			caixaStatus->Status = 1;
+			caixaStatus->prox = NULL;
+			if((*posicao)->status == NULL)
+			{
+				(*posicao)->status = caixaStatus;
+			}
+			else
+			{
+				while(status->prox != NULL)
+				{
+					status = status->prox;
+				}
+				status->prox = caixaStatus;
 			}
 		}
 		else
@@ -780,6 +797,89 @@ void Edit(Database **db,int *record)
 		}
 		camposaux = camposaux->prox;
 		lin++;
+	}
+}
+
+void Deletar(Database **posicao,int *record)
+{
+	Type *aux = (*posicao)->campos->pdados;
+	TypeLogical *aux2 = (*posicao)->status;
+	int records = 0;
+	if((*posicao)->campos != NULL)
+	{
+		while(aux != NULL && aux2 != NULL)
+		{
+			records++;
+			if(*record == records)
+			{
+				aux2->Status = 0;
+				gotoxy(10,10);
+				printf("1 Registro Deletado");
+			}
+			aux = aux->prox;
+			aux2 = aux2->prox;
+		}
+	}
+}
+
+void Recall(Database **posicao,int *record)
+{
+	Type *aux = (*posicao)->campos->pdados;
+	TypeLogical *aux2 = (*posicao)->status;
+	int count = 0;
+	int records = 0;
+	if((*posicao)->campos != NULL)
+	{
+		while(aux != NULL && aux2 != NULL)
+		{
+			records++;
+			if(*record == records)
+			{
+				aux2->Status = 1;
+				gotoxy(10,10);
+				printf("1 Registro Recuperado");
+			}	
+			aux = aux->prox;
+			aux2 = aux2->prox;
+		}
+	}
+}
+
+void RecallAll(Database **posicao)
+{
+	Type *aux = (*posicao)->campos->pdados;
+	TypeLogical *aux2 = (*posicao)->status;
+	int count = 0;
+	if((*posicao)->campos != NULL)
+	{
+		while(aux != NULL && aux2 != NULL)
+		{
+			aux2->Status = 1;
+			count++;
+			aux = aux->prox;
+			aux2 = aux2->prox;
+		}
+		gotoxy(10,10);
+		printf("%d Registros Recuperados",count);
+	}
+}
+
+void DeletarTodos(Database **posicao)
+{
+	Type *aux = (*posicao)->campos->pdados;
+	int count = 0;
+	TypeLogical *aux2 = (*posicao)->status;
+	if((*posicao)->campos != NULL)
+	{
+		while(aux != NULL && aux2 != NULL)
+		{
+			aux2->Status = 0;
+			count++;
+			aux = aux->prox;
+			aux2 = aux2->prox;
+		}
+		gotoxy(10,10);
+		printf("%d Registros Deletados",count);
 	}
 }
 
@@ -1084,7 +1184,6 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual,int *re
 			if(*dbatual != NULL)
 			{
 
-				Database *ptr = *dbatual;
 				if(record != 0)
 				{
 					limpatela();
@@ -1096,6 +1195,164 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual,int *re
 					gotoxy(80,28);
 					printf("Registro nao selecionado!");
 				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("DELETE",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					Deletar(&*dbatual,record);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("DELETE ALL",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					DeletarTodos(&*dbatual);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("RECALL",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					Recall(&*dbatual,record);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("RECALL ALL",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					RecallAll(&*dbatual);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("ZAP",cmd) == 0)
+	{
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+				free(*dbatual);
 			}
 			else
 			{
