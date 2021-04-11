@@ -552,6 +552,11 @@ char Locate(char *cmd)
 	return stricmp(subString(cmd,11),"LOCATE FOR ") == 0;
 }
 
+char Goto(char *cmd)
+{
+	return stricmp(subString(cmd,4),"GOTO") == 0;
+}
+
 char *getCampo(char *cmd)
 {
 	char *pch2;
@@ -567,6 +572,21 @@ char *getCampo(char *cmd)
 	}
 	campoBuscado = palavra2[2];
 	return campoBuscado;
+}
+
+int getGotoNumber(char *cmd)
+{
+	char *pch;
+	pch = strtok(cmd," ");
+	int i = 0;
+	char *letra[5];
+	while(pch != NULL)
+	{
+		letra[i] = pch;
+		i++;
+		pch = strtok(NULL," ");
+	}
+	return atoi(letra[1]);
 }
 
 char *getValorBuscado(char *cmd)
@@ -653,7 +673,62 @@ void LocalizarRegistro(Database *posicao,char *campo,char *valor)
 	getch();
 }
 
-void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
+char GotoRegistro(Field *posicao,int record)
+{
+	int count = 0;
+	int boolean = 0;
+	Field *campos = posicao;
+	Type *aux = campos->pdados;
+	while(aux != NULL)
+	{
+		aux = aux->prox;
+		count++;
+		if(count == record)
+			boolean = 1;
+	}
+	return boolean;
+}
+
+void Display(Field *posicao,int record)
+{
+	gotoxy(10,5);
+	printf("Record#");
+	int records,col = 25;
+	Field *campos = posicao;
+	Type *aux = campos->pdados;
+	while(campos != NULL)
+	{
+		gotoxy(col,5);
+		printf("%s",campos->fieldname);
+		records = 0;
+		aux = campos->pdados;
+		while(aux != NULL)
+		{
+			gotoxy(10,6);
+			records++;
+			if(records == record)
+			{
+				printf("%d",records);
+				gotoxy(col,6);
+				if(aux->terminal == 'N')
+					printf("%.2f",aux->no.number);
+				else if(aux->terminal == 'C')
+					printf("%s",aux->no.character);
+				else if(aux->terminal == 'D')
+					printf("%s",aux->no.date);
+				else if(aux->terminal == 'L')
+					printf("%c",aux->no.logical);
+				else if(aux->terminal == 'M')
+					printf("%s",aux->no.memo);
+			}
+			aux = aux->prox;
+		}
+		campos = campos->prox;
+		col+=15;
+	}
+}
+
+void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual,int *record)
 {
 	if(set_default_to(cmd))
 	{
@@ -849,10 +924,10 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 	}
 	else if(Locate(cmd))
 	{
-		char *Campo,*ValorBuscado;
+		char *ValorBuscado;
 		char cmd2[50];
 		strcpy(cmd2,cmd);
-		Campo = getCampo(cmd);
+		char *Campo = getCampo(cmd);
 		ValorBuscado = getValorBuscado(cmd2);
 		gotoxy(80,28);
 		if((*posicao) != NULL)
@@ -863,6 +938,75 @@ void comando(char *cmd,Unidade *und,Unidade **posicao,Database **dbatual)
 				desenhaBorda();
 				Database *ptr = *dbatual;
 				LocalizarRegistro(ptr,Campo,ValorBuscado);
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(Goto(cmd))
+	{	
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				*record = getGotoNumber(cmd);
+				int registro = GotoRegistro(ptr->campos,*record);
+				if(registro != 0)
+				{
+					gotoxy(80,28);
+					printf("Registro Encontrado!");
+				}
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao Existe!");
+				}
+			}
+			else
+			{
+				gotoxy(80,28);
+				printf("Database nao selecionada!");
+			}
+		}
+		else
+		{
+			gotoxy(80,28);
+			printf("Unidade nao selecionada!");
+		}
+		getch();
+		telainicial();
+	}
+	else if(stricmp("DISPLAY",cmd) == 0)
+	{	
+		if((*posicao) != NULL)
+		{
+			if(*dbatual != NULL)
+			{
+
+				Database *ptr = *dbatual;
+				if(record != 0)
+				{
+					limpatela();
+					desenhaBorda();
+					Display(ptr->campos,*record);
+				}	
+				else
+				{
+					gotoxy(80,28);
+					printf("Registro nao selecionado!");
+				}
 			}
 			else
 			{
@@ -1027,6 +1171,7 @@ void Startup()
 	Unidade *und = NULL;
 	Unidade *pos = NULL;
 	Database *dbatual = NULL;
+	int registro = 0;
 	createDir(&und,"C:");
 	createDir(&und,"D:");
 	deslMaximizar();
@@ -1035,7 +1180,7 @@ void Startup()
 	while(strcmp(cmd,"QUIT") != 0)
 	{
 		strcpy(cmd,commandType(cmd));
-		comando(cmd,und,&pos,&dbatual);
+		comando(cmd,und,&pos,&dbatual,&registro);
 		limpaParcial();
 	}
 }
