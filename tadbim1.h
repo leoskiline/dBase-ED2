@@ -27,9 +27,6 @@ struct type
 };
 
 typedef struct type Type;
-
-
-
 typedef struct field Field;
 
 struct typelogical
